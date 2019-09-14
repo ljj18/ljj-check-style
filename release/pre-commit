@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# An example hook script to verify what is about to be committed.
+# Called by "git commit" with no arguments.  The hook should
+# exit with non-zero status after issuing an appropriate message if
+# it wants to stop the commit.
+#
+# To enable this hook, rename this file to "pre-commit".
+REJECT=0
+CHECKSTYLE_FILELIST="target/checkstyle.filelist"
+CHECK_RESULTS=""
+ERROR_MESSAGE="Code is not standardized"
+echo code review start 
+rm -rf $CHECKSTYLE_FILELIST
+git diff --name-only |grep -e "\.java$" >> $CHECKSTYLE_FILELIST
+
+if [ ! -s $CHECKSTYLE_FILELIST ];then
+	echo "没有要提交的代码"
+else
+	echo "Review......"
+	CHECK_RESULTS=$(java -cp ljj-check-sytel-1.0.1.jar com.ljj.code.check.GitHook)
+fi
+if [[ $CHECK_RESULTS =~ $ERROR_MESSAGE ]] 
+then 
+	echo "代码不规范,系统两行泪,优雅的代码是成为大牛必要条件哦^-^"
+	echo "本次代码提交失败,请规范化代码后再提交"
+	REJECT=1
+else
+	echo "恭喜您,您的代码非常完美,继续保持哦!!!"
+fi
+echo $CHECK_RESULTS
+echo code review end
+exit $REJECT
